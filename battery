@@ -1,0 +1,145 @@
+#!/bin/bash
+# battery -- output the current state of battery power on Macs.
+#
+# Copyright (c) 2013, Marcel Dümmel <marcel.duemmel@gmail.com> 
+# All rights reserved.
+#
+# This program is licensed unter the terms of the BSD license as following:
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#   o Redistributions of source code must retain the above copyright notice, 
+#     this list of conditions and the following disclaimer.  
+#
+#   o Redistributions in binary form must reproduce the above copyright notice,
+#     this list of conditions and the following disclaimer in the documentation 
+#     and/or other materials provided with the distribution.  
+#
+#   o Neither the name of my organizations nor the names of its contributors 
+#     may be used to endorse or promote products derived from this software 
+#     without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.                                                                                .
+
+help() { 
+	name=`basename $0`
+	echo "Usage: $name [-w <number>] [-c] [-n] [-h]" 1>&2
+	echo "Output the current state of battery power on Macs."
+	echo 
+	echo "Options:"
+	echo
+	echo "          -c    colored output. (ANSI terminal necessary)"
+	echo "          -h    This help"
+	echo "          -w    Width of the bar" 
+	echo "          -n    Numerical output"
+	echo
+	echo "Report bugs to <marcel.duemmel@gmail.com>"
+	exit 0
+}
+
+usage() {
+	name=`basename $0`
+	echo "Usage: $name [-w <number>] [-c] [-n] [-h]" 1>&2
+       	exit 1
+}
+
+# Defaults
+barwidth=20
+color=false
+numeric=false
+color1='[0;31m'  # Color for the first fifth: red
+color2='[0;33m'  # Color for the second fifth: yellow
+color3='[0;32m'  # Color for the rest: green
+endcolor='[0m'
+
+###############################################################################
+# Process parameters
+# 
+# I use the bash-buildin getopts rather then the stand-alone getopt.
+# The advantage is that this is the most compatible way. It only depends on
+# a more or less modern bash installation.
+# the disadvantage is that we can only use short operators. 
+# The `--some-long-parameter`-form is not supported.
+
+while getopts "w:cnh" o; do
+	case "${o}" in
+		w)
+			barwidth=${OPTARG}
+			((barwidth > 0)) || usage
+			;;
+		c)
+			color=true
+			;;
+		n)
+			numeric=true
+			;;
+		h)
+			help
+			;;
+		*)
+			usage
+			;;
+	esac
+done
+shift $((OPTIND-1))
+
+###############################################################################
+# Get battery-informations
+#
+# I use the ioreg-command which is IMHO Mac-only. It should be easy to adapt
+# this code for som BSDs or even for Linux.
+
+battery=`ioreg -l | grep -i capacity | tr '\n' ' | ' |
+	awk '{printf("%f", $10/$5 )}'`
+batteryhuman=`ioreg -l | grep -i capacity | tr '\n' ' | ' | 
+	awk '{printf("%.2f", $10/$5 *100 )}'`
+
+#Some pre-formating
+result=`echo $battery $barwidth \*p | tr ',' '.' | dc`
+result=$(echo $result | cut -d"." -f1)
+bar="["
+
+if $numeric ; then
+	echo $batteryhuman
+	exit 0
+fi
+
+for i in $(seq 1 $barwidth );
+do
+	if [ "$i" -le "$result" ]; then
+		if $color ; then
+			p=`echo "2 k $i $barwidth / 100 * p" | dc`
+			p=$(echo $p | cut -d"." -f1)	
+			if (( $p >= 0 && $p <=20 ))
+			then
+				c=$color1
+			elif (( $p >= 21 && $p <=40 ))
+			then
+				c=$color2
+			elif (( $p >= 41 && $p <=100 ))
+			then
+				c=$color3
+			fi
+			bar="$bar$c#"
+		else
+			bar="$bar#"
+		fi
+	else
+		bar="$bar."
+	fi
+done
+
+bar="$bar$endcolor] $batteryhuman %"
+echo $bar
+ 
