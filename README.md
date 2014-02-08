@@ -3,7 +3,7 @@
 Battery is a script written in bash-script that shows the current battery power
 as percentage and a fancy colored bar.
 Battery is tested on Macs running Mac OS X 10.8.5, but it should run on every
-system that provides the *ioreg*-command.
+system that provides the `ioreg`-command.
 
 ## Features
 
@@ -17,14 +17,14 @@ system that provides the *ioreg*-command.
 For a simple uncolored bar call the programm without options.
 If you like it fancy, you could use one of this options:
 
-	-h              Output a short help
-	-c              Output is colored
-	-w <no>	        Define the width of the bar (default: 20)
-	-n              Output a numerical value only (may be usefull in your own scripts
+	-h             Output a short help
+	-c             Output is colored
+	-w <number>    Define the width of the bar (default: 20)
+	-n             Output a numerical value only (may be useful in your own scripts)
 
 ## Conclusion
 
-I wrote Battery for my own needs. It is one of my first Bash-scripts (exept
-some dozen 3-liners). If it is usefull for you, I would be delighted to hear
+I wrote Battery for my own needs. It is one of my first Bash-scripts (except
+some dozen 3-liners). If it is useful for you, I would be delighted to hear
 about that. Feel free to send me an e-mail to
- [marcel.duemmel@gmail.com](marcel.duemmel@gmail.com).
+ [marcel.duemmel@gmail.com](mailto:marcel.duemmel@gmail.com).
