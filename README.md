@@ -28,3 +28,9 @@ I wrote Battery for my own needs. It is one of my first Bash-scripts (except
 some dozen 3-liners). If it is useful for you, I would be delighted to hear
 about that. Feel free to send me an e-mail to
  [marcel.duemmel@gmail.com](mailto:marcel.duemmel@gmail.com).
+
+## Contributors
+
+Adam Lazzarato: cleanup of some ugly trailing whitespaces,
+                corrections in the readme-file.
+
