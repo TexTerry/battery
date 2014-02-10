@@ -19,6 +19,8 @@ If you like it fancy, you could use one of this options:
 
 	-h             Output a short help
 	-c             Output is colored
+    -p             Charging
+    -t             Time remaining
 	-w <number>    Define the width of the bar (default: 20)
 	-n             Output a numerical value only (may be useful in your own scripts)
 

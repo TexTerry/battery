@@ -41,6 +41,8 @@ help() {
 	echo
 	echo "     -c          Colored output. (ANSI terminal necessary)"
 	echo "     -h          This help"
+    echo "     -p          Plugged in (charging)"
+    echo "     -t          Time remaining"
 	echo "     -w <number> Width of the bar"
 	echo "     -n          Numerical output"
 	echo
@@ -72,7 +74,7 @@ endcolor='[0m'
 # the disadvantage is that we can only use short operators.
 # The `--some-long-parameter`-form is not supported.
 
-while getopts "w:cnh" o; do
+while getopts "w:cnhtp" o; do
 	case "${o}" in
 		w)
 			barwidth=${OPTARG}
@@ -84,6 +86,12 @@ while getopts "w:cnh" o; do
 		n)
 			numeric=true
 			;;
+        p)
+            displaycharging=true
+            ;;
+        t)
+            displaytimerem=true
+            ;;
 		h)
 			help
 			;;
@@ -100,10 +108,10 @@ shift $((OPTIND-1))
 # I use the ioreg-command which is IMHO Mac-only. It should be easy to adapt
 # this code for som BSDs or even for Linux.
 
-battery=`ioreg -l | grep -i capacity | tr '\n' ' | ' |
+battery=`ioreg -n AppleSmartBattery | grep -i Capacity | tr '\n' ' | ' |
 	awk '{printf("%f", $10/$5 )}'`
-batteryhuman=`ioreg -l | grep -i capacity | tr '\n' ' | ' |
-	awk '{printf("%.2f", $10/$5 *100 )}'`
+batteryhuman=`ioreg -n AppleSmartBattery | grep -i Capacity | tr '\n' ' | ' |
+	awk '{printf("%0.2f", $10/$5 *100 )}'`
 
 #Some pre-formating
 result=`echo $battery $barwidth \*p | tr ',' '.' | dc`
@@ -115,7 +123,7 @@ if $numeric ; then
 	exit 0
 fi
 
-for i in $(seq 1 $barwidth );
+for i in $(seq 1 $barwidth);
 do
 	if [ "$i" -le "$result" ]; then
 		if $color ; then
@@ -142,3 +150,20 @@ done
 
 bar="$bar$endcolor] $batteryhuman %"
 echo $bar
+
+if [ $displaycharging ]; then
+    charging=`ioreg -n AppleSmartBattery | grep -i IsCharging | awk '{print $5}'`
+    echo "Charging: $charging"
+fi
+
+if [ $displaytimerem ]; then
+    timerem=`ioreg -n AppleSmartBattery | grep -i TimeRemaining | awk '{print $5}'`
+
+    if [ $timerem -le 60 ]; then
+        echo "Time remaining: $timerem mins"
+    else
+        hours=`echo "$timerem / 60" | bc -l`
+        minutes=`echo "($timerem-$hours) / 60" | bc -l`
+       printf "Time remaining: %0.0f:%02.0f" $hours $minutes
+    fi
+fi
