@@ -170,6 +170,6 @@ if [ $displaytimerem ]; then
     else
         hours=`echo "$timerem / 60" | bc -l`
         minutes=`echo "($timerem-$hours) / 60" | bc -l`
-        echo "Time remaining: $hours hours $minutes minutes$charging\n" $hours $minutes
+        echo "Time remaining: $hours hours $minutes minutes $charging"
     fi
 fi
