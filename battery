@@ -158,12 +158,18 @@ fi
 
 if [ $displaytimerem ]; then
     timerem=`ioreg -n AppleSmartBattery | grep -i TimeRemaining | awk '{print $5}'`
+    charging=`ioreg -n AppleSmartBattery | grep -i IsCharging | awk '{print $5}'`
+    if [ $charging == "Yes" ]; then
+        charging="(until full)"
+    else
+        charging=""
+    fi
 
     if [ $timerem -le 60 ]; then
-        echo "Time remaining: $timerem mins"
+        echo "Time remaining: $timerem mins $charging"
     else
         hours=`echo "$timerem / 60" | bc -l`
         minutes=`echo "($timerem-$hours) / 60" | bc -l`
-       printf "Time remaining: %0.0f:%02.0f" $hours $minutes
+        echo "Time remaining: $hours hours $minutes minutes$charging\n" $hours $minutes
     fi
 fi
