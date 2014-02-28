@@ -166,10 +166,14 @@ if [ $displaytimerem ]; then
     fi
 
     if [ $timerem -le 60 ]; then
-        echo "Time remaining: $timerem mins $charging"
+        if [ $timerem -eq 0 ]; then
+            echo "Battery is charged"
+        else
+            echo "Time remaining: $timerem mins $charging"
+        fi
     else
-        hours=`echo "$timerem / 60" | bc -l`
-        minutes=`echo "($timerem-$hours) / 60" | bc -l`
+        hours=$((timerem / 60))
+        minutes=$((timerem-(60*hours)))
         echo "Time remaining: $hours hours $minutes minutes $charging"
     fi
 fi
