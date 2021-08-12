@@ -1,7 +1,7 @@
 #!/bin/bash
 # battery -- output the current state of battery power on Macs.
 #
-# Copyright (c) 2013, Marcel Dümmel <marcel.duemmel@gmail.com>
+# Copyright (c) 2021, Marcel Dümmel <marcel.duemmel@aquasign.net>
 # All rights reserved.
 #
 # This program is licensed unter the terms of the BSD license as following:
@@ -10,15 +10,15 @@
 # modification, are permitted provided that the following conditions are met:
 #
 #   o Redistributions of source code must retain the above copyright notice,
-#     this list of conditions and the following disclaimer.
+#	 this list of conditions and the following disclaimer.
 #
 #   o Redistributions in binary form must reproduce the above copyright notice,
-#     this list of conditions and the following disclaimer in the documentation
-#     and/or other materials provided with the distribution.
+#	 this list of conditions and the following disclaimer in the documentation
+#	 and/or other materials provided with the distribution.
 #
 #   o Neither the name of my organizations nor the names of its contributors
-#     may be used to endorse or promote products derived from this software
-#     without specific prior written permission.
+#	 may be used to endorse or promote products derived from this software
+#	 without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -33,27 +33,25 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 help() {
-	name=`basename $0`
-	echo "Usage: $name [-w <number>] [-c] [-n] [-h]" 1>&2
+	usage
 	echo "Output the current state of battery power on Macs."
 	echo
 	echo "Options:"
 	echo
-	echo "     -c          Colored output. (ANSI terminal necessary)"
-	echo "     -h          This help"
-    echo "     -p          Plugged in (charging)"
-    echo "     -t          Time remaining"
-	echo "     -w <number> Width of the bar"
-	echo "     -n          Numerical output"
+	echo "	 -c          Colored output. (ANSI terminal necessary)"
+	echo "	 -h          This help"
+	echo "	 -p          Plugged in (charging)"
+	echo "	 -t          Time remaining"
+	echo "	 -w <number> Width of the bar (minimum: 3)"
+	echo "	 -n          Numerical output"
 	echo
-	echo "Report bugs to <marcel.duemmel@gmail.com>"
+	echo "Report bugs to <marcel.duemmel@aquasign.net>"
 	exit 0
 }
 
 usage() {
 	name=`basename $0`
-	echo "Usage: $name [-w <number>] [-c] [-n] [-h]" 1>&2
-       	exit 1
+	echo "Usage: $name [-w <number>] [-c] [-n] [-h]"
 }
 
 # Defaults
@@ -78,7 +76,20 @@ while getopts "w:cnhtp" o; do
 	case "${o}" in
 		w)
 			barwidth=${OPTARG}
-			((barwidth > 0)) || usage
+
+			if ! [[ "$barwidth" =~ ^[0-9]+$ ]]
+			then
+				usage
+				echo "ERROR: Width must be an integer (minimum: 3)" 1>&2
+				exit 1
+			fi
+
+			if [ "$barwidth" -lt 3 ]
+			then
+				usage
+				echo "ERROR: Width must be at least 3" 1>&2
+				exit 1
+			fi
 			;;
 		c)
 			color=true
@@ -86,12 +97,12 @@ while getopts "w:cnhtp" o; do
 		n)
 			numeric=true
 			;;
-        p)
-            displaycharging=true
-            ;;
-        t)
-            displaytimerem=true
-            ;;
+		p)
+			displaycharging=true
+			;;
+		t)
+			displaytimerem=true
+			;;
 		h)
 			help
 			;;
@@ -109,9 +120,10 @@ shift $((OPTIND-1))
 # this code for som BSDs or even for Linux.
 
 battery=`ioreg -n AppleSmartBattery | grep -i Capacity | tr '\n' ' | ' |
-	awk '{printf("%f", $10/$5 )}'`
+awk '{printf("%f", $5 / $10)}'`
+
 batteryhuman=`ioreg -n AppleSmartBattery | grep -i Capacity | tr '\n' ' | ' |
-	awk '{printf("%0.2f", $10/$5 *100 )}'`
+awk '{printf("%0.2f", $5 / $10 * 100)}'`
 
 #Some pre-formating
 result=`echo $battery $barwidth \*p | tr ',' '.' | dc`
@@ -152,28 +164,28 @@ bar="$bar$endcolor] $batteryhuman %"
 echo $bar
 
 if [ $displaycharging ]; then
-    charging=`ioreg -n AppleSmartBattery | grep -i IsCharging | awk '{print $5}'`
-    echo "Charging: $charging"
+	charging=`ioreg -n AppleSmartBattery | grep -i IsCharging | awk '{print $5}'`
+	echo "Charging: $charging"
 fi
 
 if [ $displaytimerem ]; then
-    timerem=`ioreg -n AppleSmartBattery | grep -i TimeRemaining | awk '{print $5}'`
-    charging=`ioreg -n AppleSmartBattery | grep -i IsCharging | awk '{print $5}'`
-    if [ $charging == "Yes" ]; then
-        charging="(until full)"
-    else
-        charging=""
-    fi
+	timerem=`ioreg -n AppleSmartBattery | grep -i TimeRemaining | awk '{print $5}'`
+	charging=`ioreg -n AppleSmartBattery | grep -i IsCharging | awk '{print $5}'`
+	if [ $charging == "Yes" ]; then
+		charging="(until full)"
+	else
+		charging=""
+	fi
 
-    if [ $timerem -le 60 ]; then
-        if [ $timerem -eq 0 ]; then
-            echo "Battery is charged"
-        else
-            echo "Time remaining: $timerem mins $charging"
-        fi
-    else
-        hours=$((timerem / 60))
-        minutes=$((timerem-(60*hours)))
-        echo "Time remaining: $hours hours $minutes minutes $charging"
-    fi
+	if [ $timerem -le 60 ]; then
+		if [ $timerem -eq 0 ]; then
+			echo "Battery is charged"
+		else
+			echo "Time remaining: $timerem mins $charging"
+		fi
+	else
+		hours=$((timerem / 60))
+		minutes=$((timerem-(60*hours)))
+		echo "Time remaining: $hours hours $minutes minutes $charging"
+	fi
 fi
